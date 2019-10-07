@@ -15,21 +15,14 @@ def load_in_img(img_location):
     
     #folder name has save in img_location
     imageLocation = img_location
-    image = cv2.imread(imageLocation,0) # Gray
+    image = cv2.imread(imageLocation) # Gray
 
     if (image is None):
         print(imageLocation)
         
     image = image[45:-9,::]
     image = cv2.resize(image, (200,200), fx=0, fy=0)
-    image = image.reshape(200, 200, 1)
-    x = 50
-    y = 0
-
-    w = 100
-    h = 200
-
-    crop_img = image[y:y+h, x:x+w]
+    image = image.reshape(200, 200, 3)
     return image
 
 

@@ -4,6 +4,7 @@ import cv2
 import glob
 import numpy as np
 import time
+from canny_line import color_frame_process
 
 num_of_extend = 1
 def shift_image(image):
@@ -57,9 +58,10 @@ def rotating_image(image):
 def main():
 #     ./dir/test - 1/2019-05-24-11-44-35-5233-p106-p110.png
 # 2019-05-24-11-45-33-2530-n028-p028.png
-    image = cv2.imread('./dir/test - 改-第二個轉彎後繼續前進/2019-06-13-15-15-44-5910-p059-p058.png')
+    image = cv2.imread('../../data/103/test - 1/2019-10-03-14-38-47-9333-p077-p080.png')
+    image = cv2.resize(image, (200, 200), interpolation=cv2.INTER_CUBIC)
 #     image_shift, speed = shift_image(image)
-    image_shift = couting_area(image)
+    image_shift = color_frame_process(image)
     cv2.imwrite('./test.png', image_shift)
 #     datagen = ImageDataGenerator(rotation_range=180,
 #                                  width_shift_range=0,		

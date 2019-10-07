@@ -4,6 +4,8 @@
 #assign the specific GPU
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+csv_file_name = '../../data/csv/103_store.csv'
+model_path = '../../data/model/model_dir_ver4/'
 
 # 自動增長 GPU 記憶體用量
 import tensorflow as tf
@@ -19,9 +21,9 @@ import pandas as pd
 import cv2
 import numpy as np
 
-dir_log = pd.read_csv('../../data/csv/103_store.csv',usecols=[1,3])
-speed_log = pd.read_csv('../../data/csv/103_store.csv',usecols=[2,4])
-filename_list= pd.read_csv('../../data/csv/103_store.csv',usecols=[5])
+dir_log = pd.read_csv(csv_file_name,usecols=[1,3])
+speed_log = pd.read_csv(csv_file_name,usecols=[2,4])
+filename_list= pd.read_csv(csv_file_name,usecols=[5])
 
 dir_log = np.array(dir_log).tolist()
 speed_log = np.array(speed_log).tolist()
@@ -81,7 +83,7 @@ def load_in_img(img_location):
     
     #folder name has save in img_location
     imageLocation = img_location
-    image = cv2.imread(imageLocation,0) # Gray
+    image = cv2.imread(imageLocation, 0) # Gray
 
     if (image is None):
         print(imageLocation)
@@ -239,7 +241,7 @@ import time, os, fnmatch, shutil
 def save_model(model_name):
     t = time.localtime()
     timestamp = time.strftime('%b-%d-%Y_%H-%M-%S', t)
-    model_name = ('../../data/model/model_dir_ver4/' + model_name  + '_' + timestamp + '.h5')
+    model_name = (model_path + model_name  + '_' + timestamp + '.h5')
     
     return model_name
 
@@ -248,6 +250,7 @@ from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, LambdaCallback, 
 import keras
 
 # compile and train the model using the generator function
+nb_epoch_count = 30
 for index in range(40):
     train_generator = generator(train_samples, 64)
     validation_generator = generator(validation_samples, 64)
@@ -261,15 +264,15 @@ for index in range(40):
 #                                      verbose=2)
     history_object = model.fit_generator(
                                       train_generator, 
-                                      steps_per_epoch=32000, 
+                                      steps_per_epoch=1000, 
                                       validation_data=validation_generator, 
-                                      validation_steps=len(validation_samples), 
-                                      epochs=30, 
-                                      verbose=1)   
+                                      validation_steps=len(validation_samples)/2, 
+                                      epochs=nb_epoch_count, 
+                                      verbose=1)
     
     print('history_object')
     print(history_object)
-    h5_output = save_model(str(history_object.history['loss'][9]) + '_' + str(index)) 
+    h5_output = save_model(str(history_object.history['loss'][nb_epoch_count-1]) + '_' + str(index)) 
     model.save(h5_output)
     print("Model saved")
     print('Time ',index+1)
