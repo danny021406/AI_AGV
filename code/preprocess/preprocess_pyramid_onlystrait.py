@@ -11,9 +11,9 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 # initialize
-path='../../data/108-10-16/'
+path='../../data/0918/'
 csv_path='../../data/csv/'
-csv_file_name = '../../data/csv/pyramid_store_1016.csv'
+csv_file_name = '../../data/csv/pyramid_store_strait_0918.csv'
 path_list=os.listdir(path)
 path_list.sort()
 clips = []
@@ -61,8 +61,9 @@ for dirname in path_list:
             right_wheel_dir = define_dir(right_wheel[0:1])
             right_wheel_speed = right_wheel[1:]
 #             print()
-            if( right_wheel_speed == '0' ):
-                continue
+            if(left_wheel_dir == 0 and filename != '2019-09-18-14-38-00-3933-n028-p028.png'):
+                continue;
+      
 
 #             if( down_speed_flag == 0 and left_wheel_dir == 0 ):
 #                 length = len(json_dic) - 1

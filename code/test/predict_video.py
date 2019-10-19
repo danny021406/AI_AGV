@@ -19,11 +19,12 @@ from keras.preprocessing import image
 
 
 # In[2]:
+origin_video_mode = 0
 
 
 # initialize
-path="./test_dir/"
-# path_list=os.listdir(path)
+path="../../data/108-10-16/"
+path_list=os.listdir(path)
 #path_list.sort()
 json_dic = []
 clips = []
@@ -31,20 +32,40 @@ clips = []
 time_index = 1
 time_series = []
 
+def handle_img_pre(img):
+#     gray_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+#     image_mod = load_in_img(gray_image)
+    x = image.img_to_array(img)
+    x = np.expand_dims(x, axis=0)
+    images = np.vstack([x])
+    classes = model.predict(images, batch_size=10)
+    left_dir, right_dir, left, right = handle_dir(classes[1][0][0], classes[3][0][0])
+    cv2.putText(img, "left_wheel_speed: " + str(int(classes[0][0][0]) + 10), (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2, cv2.LINE_AA)
+    cv2.putText(img, "left_wheel_dir: " + str(left_dir) + '(' + str(left) + ')', (10, 80), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2, cv2.LINE_AA)
+    cv2.putText(img, "right_wheel_speed: " + str(int(classes[2][0][0]) + 10), (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2, cv2.LINE_AA)
+    cv2.putText(img, "right_wheel_dir: " + str(right_dir) + '(' + str(right) + ')', (10, 160), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2, cv2.LINE_AA)
+    return img
+
 
 # In[3]:
 
-
-# for dirname in path_list:
-#     file_path = os.path.join(path, dirname)
-#     if(os.path.isdir(file_path)):
-#         print(dirname)
-#         dirname=os.listdir(path + '/' + dirname)
-#         dirname.sort()
-#         for filename in dirname:
-#             image = cv2.imread(os.path.join(file_path,filename), 0)
-#             clips.append(image)
-
+if (origin_video_mode):
+    for dirname in path_list:
+        file_path = os.path.join(path, dirname)
+        if(os.path.isdir(file_path)):
+            print(dirname)
+            dirname=os.listdir(path + '/' + dirname)
+            dirname.sort()
+            for filename in dirname:
+                image = cv2.imread(os.path.join(file_path,filename))
+    #             clips.append(image)
+    #             gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+                cv2.imwrite('out.jpg', handle_img_pre(image))
+    #             print(ImageClip(os.path.join(file_path,filename)))
+                clips.append(ImageClip('out.jpg').set_duration(0.05))
+    # print(clips[0])
+    video = concatenate(clips, method="compose")
+    video.write_videofile('origin.mp4', fps=24)
 
 # In[18]:
 
@@ -52,20 +73,19 @@ time_series = []
 # dimensions of our images
 img_width, img_height = 200, 200
 
-def mod_img(image):
+
+def load_in_img(image):
+    
+    #folder name has save in img_location
+#     imageLocation = img_location
+#     image = cv2.imread(imageLocation, 0) # Gray
+
+#     if (image is None):
+#         print(imageLocation)
+        
     image = image[45:-9,::]
-    image = cv2.resize(image, (img_height,img_width), fx=0, fy=0)
-    image = image.reshape(img_height, img_width, 1)
-    # 裁切區域的 x 與 y 座標（左上角）
-    x = 50
-    y = 0
-
-    # 裁切區域的長度與寬度
-    w = 100
-    h = 200
-
-    # 裁切圖片
-    crop_img = image[y:y+h, x:x+w]
+    image = cv2.resize(image, (200,200), fx=0, fy=0)
+    image = image.reshape(200, 200, 1)
     return image
 
 
@@ -81,7 +101,7 @@ def handle_dir(left, right):
 
 def handle_img(img):
     gray_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    image_mod = mod_img(gray_image)
+    image_mod = load_in_img(gray_image)
     x = image.img_to_array(image_mod)
     x = np.expand_dims(x, axis=0)
     images = np.vstack([x])
@@ -99,11 +119,12 @@ def handle_img(img):
 # In[6]:
 
 
-model_name = './model_dir_0_1/5.885818289764096_15_Jun-06-2019_03-39-41.h5'
-os.environ['HDF5_USE_FILE_LOCKING']='FALSE'
-print(model_name)
-model = load_model(model_name)
-model.compile(optimizer="adam", loss="mse")
+if (not origin_video_mode):
+    model_name = '../../data/model/model_dir_ver4/19.302972673808387_19_Oct-18-2019_21-41-21.h5'
+    os.environ['HDF5_USE_FILE_LOCKING']='FALSE'
+    print(model_name)
+    model = load_model(model_name)
+    model.compile(optimizer="adam", loss="mse")
 
 
 # In[7]:
@@ -117,11 +138,11 @@ model.compile(optimizer="adam", loss="mse")
 # In[23]:
 
 
-test_clip_filename = './clip.mp4'
-new_clip_output = './predict.mp4'
-test_clip = VideoFileClip(test_clip_filename)
-new_clip = test_clip.fl_image(lambda x: handle_img(x)) #NOTE: this function expects color images!!
-new_clip.write_videofile(new_clip_output,audio=False, fps = 2)
+    test_clip_filename = './origin.mp4'
+    new_clip_output = './predict.mp4'
+    test_clip = VideoFileClip(test_clip_filename)
+    new_clip = test_clip.fl_image(lambda x: handle_img(x)) #NOTE: this function expects color images!!
+    new_clip.write_videofile(new_clip_output,audio=False, fps = 15)
 
 
 # # In[24]:

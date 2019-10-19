@@ -4,7 +4,7 @@
 #assign the specific GPU
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-csv_file_name = '../../data/csv/103_store.csv'
+csv_file_name = '../../data/csv/pyramid_store_1016.csv'
 model_path = '../../data/model/model_dir_ver4/'
 
 # 自動增長 GPU 記憶體用量
@@ -12,6 +12,7 @@ import tensorflow as tf
 import keras.backend.tensorflow_backend as ktf
 config = tf.ConfigProto()
 config.gpu_options.allow_growth=True
+config = tf.ConfigProto(allow_soft_placement=True)
 session = tf.Session(config=config)
 ktf.set_session(session)
 graph = False
@@ -20,6 +21,7 @@ graph = False
 import pandas as pd
 import cv2
 import numpy as np
+from canny_line import color_frame_process
 
 dir_log = pd.read_csv(csv_file_name,usecols=[1,3])
 speed_log = pd.read_csv(csv_file_name,usecols=[2,4])
@@ -78,7 +80,23 @@ for i in range(len(dir_log)):
 track_log=pd.DataFrame(track_log)
 track_log.rename(columns={0:'left_wheel_speed',1:'right_wheel_speed',2:'left_wheel_dir',3:'right_wheel_dir',4:'filename'},inplace=True)
 
-#load in the img by csv_data
+# def load_in_img(img_location):
+    
+#     #folder name has save in img_location
+#     imageLocation = img_location
+#     image = cv2.imread(imageLocation) # Gray
+
+#     if (image is None):
+#         print(imageLocation)
+# #     print(imageLocation)
+
+# #     image = image[45:-9,::]
+#     image = cv2.resize(image, (200, 200), interpolation=cv2.INTER_CUBIC)
+#     image = color_frame_process(image)
+#     image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+#     image = image.reshape(200, 200, 1)
+#     return image
+# #load in the img by csv_data
 def load_in_img(img_location):
     
     #folder name has save in img_location
@@ -197,11 +215,23 @@ import pickle
 import numpy as np
 import math
 from keras.utils import np_utils
-from keras.layers import Lambda, Conv2D, MaxPooling2D, Dropout, Dense, Flatten, Input, Activation, LSTM, TimeDistributed
+from keras.layers import Lambda, Conv2D, MaxPooling2D, Dropout, Dense, Flatten, Input, Activation, Concatenate
 from keras.optimizers import SGD, Adam
 from keras.models import Sequential
 from keras.models import Model
+from keras import backend as K
 
+def mean_squared_error_custom(y_true, y_pred):
+    y_diff = (y_pred - y_true)
+#     print(K.eval(y_true))
+    return K.mean(K.square(y_diff), axis=-1)
+    return K.mean(K.square(100 * (y_diff/K.mean(y_diff, axis=-1))), axis=-1)
+losses = {
+    "right_dir_output": "binary_crossentropy",
+    "left_dir_output": "binary_crossentropy",
+    "left_speed_output": "mse",
+    "right_speed_output": "mse",
+}
 INPUT_SHAPE = (200, 200, 1) # height width
 DROP_PROB = 0.7
 os.environ['HDF5_USE_FILE_LOCKING']='FALSE'
@@ -209,32 +239,37 @@ os.environ['HDF5_USE_FILE_LOCKING']='FALSE'
 main_input = Input(shape=INPUT_SHAPE, name='main_input')
 
 x = Conv2D(24, (3, 3), activation='relu', strides=(2, 2))(main_input)
-x = Conv2D(24, (5, 5), activation='relu', strides=(2, 2))(x)
+x = Conv2D(24, (3, 3), activation='relu', strides=(2, 2))(x)
 x = Conv2D(36, (5, 5), activation='relu', strides=(2, 2))(x)
 x = Conv2D(48, (5, 5), activation='relu', strides=(2, 2))(x)
 x = Conv2D(64, (3, 3), activation='relu')(x)
 x = Conv2D(64, (3, 3), activation='relu')(x)
+x = Conv2D(128, (3, 3), activation='relu')(x)
 x = Dropout(DROP_PROB)(x)
+
 x = Flatten()(x)
-x = Dense(100)(x)
-x = Dense(50)(x)
-speed = Dense(10, name='speed')(x)
-direction = Dense(10, name='direction')(x)
+x = Dense(512)(x)
+x = Dense(128)(x)
+x = Dense(10, name='speed')(x)
 
-left_speed_output = Dense(1, name='left_speed_output')(speed)
-left_dir_output_ = Dense(5, name='left_dir_output_')(speed)
-left_dir_output = Dense(1, name='left_dir_output', activation='sigmoid')(left_dir_output_)
+left_speed_output = Dense(1, name='left_speed_output', use_bias=True)(x)
+left_dir_output_ = Dense(5, name='left_dir_output_')(left_speed_output)
 
-right_speed_output = Dense(1, name='right_speed_output')(speed)
-right_dir_output_ = Dense(5,name='right_dir_output_')(speed)
-right_dir_output = Dense(1,name='right_dir_output', activation='sigmoid')(right_dir_output_)
+left_concat_layer= Concatenate()([left_dir_output_, x])
+left_dir_output = Dense(1, name='left_dir_output', activation='sigmoid')(left_concat_layer)
+
+right_speed_output = Dense(1, name='right_speed_output', use_bias=True)(x)
+right_dir_output_ = Dense(5,name='right_dir_output_')(right_speed_output)
+
+right_concat_layer= Concatenate()([right_dir_output_, x])
+right_dir_output = Dense(1,name='right_dir_output', activation='sigmoid')(right_concat_layer)
 
 
 # model summary 
 model = Model(inputs=[main_input], outputs=[left_speed_output, left_dir_output, right_speed_output, right_dir_output])
 
 model.summary()
-model.compile(optimizer="adam", loss="mse")
+model.compile(optimizer="adam", loss=losses)
 
 
 import time, os, fnmatch, shutil
@@ -252,8 +287,8 @@ import keras
 # compile and train the model using the generator function
 nb_epoch_count = 30
 for index in range(40):
-    train_generator = generator(train_samples, 64)
-    validation_generator = generator(validation_samples, 64)
+    train_generator = generator(train_samples, 16)
+    validation_generator = generator(validation_samples, 4)
     
 #     history_object = model.fit_generator(
 #                                      train_generator, 
@@ -264,7 +299,7 @@ for index in range(40):
 #                                      verbose=2)
     history_object = model.fit_generator(
                                       train_generator, 
-                                      steps_per_epoch=1000, 
+                                      steps_per_epoch=200, 
                                       validation_data=validation_generator, 
                                       validation_steps=len(validation_samples)/2, 
                                       epochs=nb_epoch_count, 
@@ -278,16 +313,16 @@ for index in range(40):
     print('Time ',index+1)
 
     # summarize history for loss
-    plt.close('all')
-    plt.plot(history_object.history['loss'])
-    plt.plot(history_object.history['val_loss'])
-    plt.title('model loss')
-    plt.ylabel('loss')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'test'], loc='upper right')
-    plt.show()
-    plt.savefig("./image/gray_" + str(index) + "_image.png")
-    plt.close('all')
+#     plt.close('all')
+#     plt.plot(history_object.history['loss'])
+#     plt.plot(history_object.history['val_loss'])
+#     plt.title('model loss')
+#     plt.ylabel('loss')
+#     plt.xlabel('epoch')
+#     plt.legend(['train', 'test'], loc='upper right')
+#     plt.show()
+#     plt.savefig("./image/gray_" + str(index) + "_image.png")
+#     plt.close('all')
 
 # summarize history for loss
 if graph:

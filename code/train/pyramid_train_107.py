@@ -4,7 +4,7 @@
 #assign the specific GPU
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-csv_file_name = '../../data/csv/103_store.csv'
+csv_file_name = '../../data/csv/pyramid_store_1016.csv'
 model_path = '../../data/model/model_dir_ver4/'
 
 # 自動增長 GPU 記憶體用量
@@ -78,19 +78,22 @@ for i in range(len(dir_log)):
 
 track_log=pd.DataFrame(track_log)
 track_log.rename(columns={0:'left_wheel_speed',1:'right_wheel_speed',2:'left_wheel_dir',3:'right_wheel_dir',4:'filename'},inplace=True)
-
+print(track_log[0])
 #load in the img by csv_data
 def load_in_img(img_location):
     
     #folder name has save in img_location
     imageLocation = img_location
-    image = cv2.imread(imageLocation, 0) # Gray
+    image = cv2.imread(imageLocation) # Gray
 
     if (image is None):
         print(imageLocation)
-        
-    image = image[45:-9,::]
-    image = cv2.resize(image, (200,200), fx=0, fy=0)
+#     print(imageLocation)
+
+#     image = image[45:-9,::]
+    image = cv2.resize(image, (200, 200), interpolation=cv2.INTER_CUBIC)
+    image = color_frame_process(image)
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
     image = image.reshape(200, 200, 1)
     return image
 
@@ -251,10 +254,10 @@ from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, LambdaCallback, 
 import keras
 
 # compile and train the model using the generator function
-nb_epoch_count = 30
+nb_epoch_count = 1
 for index in range(40):
-    train_generator = generator(train_samples, 64)
-    validation_generator = generator(validation_samples, 64)
+    train_generator = generator(train_samples, 16)
+    validation_generator = generator(validation_samples, 16)
     
 #     history_object = model.fit_generator(
 #                                      train_generator, 
@@ -265,7 +268,7 @@ for index in range(40):
 #                                      verbose=2)
     history_object = model.fit_generator(
                                       train_generator, 
-                                      steps_per_epoch=1000, 
+                                      steps_per_epoch=200, 
                                       validation_data=validation_generator, 
                                       validation_steps=len(validation_samples)/2, 
                                       epochs=nb_epoch_count, 

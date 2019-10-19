@@ -88,7 +88,7 @@ def load_in_img(img_location):
     if (image is None):
         print(imageLocation)
         
-    image = image[45:-9,::]
+    image = image[135:350,::]
     image = cv2.resize(image, (200,200), fx=0, fy=0)
     image = image.reshape(200, 200, 1)
     return image

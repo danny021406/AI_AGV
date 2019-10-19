@@ -58,7 +58,7 @@ def rotating_image(image):
 def main():
 #     ./dir/test - 1/2019-05-24-11-44-35-5233-p106-p110.png
 # 2019-05-24-11-45-33-2530-n028-p028.png
-    image = cv2.imread('../../data/103/test - 1/2019-10-03-14-38-47-9333-p077-p080.png')
+    image = cv2.imread('../../data/103/test - 1/2019-10-03-14-39-28-2314-n028-p028.png')
     image = cv2.resize(image, (200, 200), interpolation=cv2.INTER_CUBIC)
 #     image_shift, speed = shift_image(image)
     image_shift = color_frame_process(image)
