@@ -221,11 +221,6 @@ from keras.models import Sequential
 from keras.models import Model
 from keras import backend as K
 
-def mean_squared_error_custom(y_true, y_pred):
-    y_diff = (y_pred - y_true)
-#     print(K.eval(y_true))
-    return K.mean(K.square(y_diff), axis=-1)
-    return K.mean(K.square(100 * (y_diff/K.mean(y_diff, axis=-1))), axis=-1)
 losses = {
     "right_dir_output": "binary_crossentropy",
     "left_dir_output": "binary_crossentropy",
@@ -244,21 +239,21 @@ x = Conv2D(36, (5, 5), activation='relu', strides=(2, 2))(x)
 x = Conv2D(48, (5, 5), activation='relu', strides=(2, 2))(x)
 x = Conv2D(64, (3, 3), activation='relu')(x)
 x = Conv2D(64, (3, 3), activation='relu')(x)
-x = Conv2D(128, (3, 3), activation='relu')(x)
+x = Conv2D(64, (3, 3), activation='relu')(x)
+# x = Conv2D(128, (3, 3), activation='relu')(x)
 x = Dropout(DROP_PROB)(x)
-
 x = Flatten()(x)
 x = Dense(512)(x)
 x = Dense(128)(x)
 x = Dense(10, name='speed')(x)
 
-left_speed_output = Dense(1, name='left_speed_output', use_bias=True)(x)
+left_speed_output = Dense(1, name='left_speed_output')(x)
 left_dir_output_ = Dense(5, name='left_dir_output_')(left_speed_output)
 
 left_concat_layer= Concatenate()([left_dir_output_, x])
 left_dir_output = Dense(1, name='left_dir_output', activation='sigmoid')(left_concat_layer)
 
-right_speed_output = Dense(1, name='right_speed_output', use_bias=True)(x)
+right_speed_output = Dense(1, name='right_speed_output')(x)
 right_dir_output_ = Dense(5,name='right_dir_output_')(right_speed_output)
 
 right_concat_layer= Concatenate()([right_dir_output_, x])
