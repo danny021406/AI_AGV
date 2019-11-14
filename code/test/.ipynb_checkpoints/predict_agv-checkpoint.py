@@ -15,21 +15,14 @@ def load_in_img(img_location):
     
     #folder name has save in img_location
     imageLocation = img_location
-    image = cv2.imread(imageLocation,0) # Gray
+    image = cv2.imread(imageLocation) # Gray
 
     if (image is None):
         print(imageLocation)
         
     image = image[45:-9,::]
     image = cv2.resize(image, (200,200), fx=0, fy=0)
-    image = image.reshape(200, 200, 1)
-    x = 50
-    y = 0
-
-    w = 100
-    h = 200
-
-    crop_img = image[y:y+h, x:x+w]
+    image = image.reshape(200, 200, 3)
     return image
 
 
@@ -64,10 +57,10 @@ def handle_img():
     os.system('mv value_*.txt value_0_0_0_0.txt')
     os.system(command_string)
     os.system('mv status_1.txt status_2.txt')
+
     
-    
-    
-    
+
+
 #     cv2.putText(img, "left_wheel_speed: " + str(int(classes[0][0][0]) + 10), (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2, cv2.LINE_AA)
 #     cv2.putText(img, "left_wheel_dir: " + str(left_dir) + '(' + str(left) + ')', (10, 80), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2, cv2.LINE_AA)
 #     cv2.putText(img, "right_wheel_speed: " + str(int(classes[2][0][0]) + 10), (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2, cv2.LINE_AA)

@@ -9,7 +9,7 @@ import pandas as pd
 from keras.models import load_model
 from keras.preprocessing import image
 
-img_width, img_height = 200, 200
+img_width, img_height = 400, 400
 
 def load_in_img(img_location):
     
@@ -21,8 +21,8 @@ def load_in_img(img_location):
         print(imageLocation)
         
     image = image[45:-9,::]
-    image = cv2.resize(image, (200,200), fx=0, fy=0)
-    image = image.reshape(200, 200, 3)
+    image = cv2.resize(image, (400,400), fx=0, fy=0)
+    image = image.reshape(400, 400, 1)
     return image
 
 
@@ -45,22 +45,22 @@ def handle_img():
     if (int(classes[0][0][0]))<= 0.0 :
         speed_left = 0
     else:
-        speed_left = int(classes[0][0][0]) + 30
+        speed_left = int(classes[0][0][0])
 
     if (int(classes[2][0][0]))<= 0.0 :
         speed_right = 0
     else:
-        speed_right = int(classes[2][0][0]) + 30
+        speed_right = int(classes[2][0][0])
     
     command_string = 'mv value_*.txt value_' + str(left_dir) + '_' + str(right_dir) + '_' + str(speed_left) + '_' + str(speed_right) + '.txt'
     print(command_string)
     os.system('mv value_*.txt value_0_0_0_0.txt')
     os.system(command_string)
     os.system('mv status_1.txt status_2.txt')
+
     
-    
-    
-    
+
+
 #     cv2.putText(img, "left_wheel_speed: " + str(int(classes[0][0][0]) + 10), (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2, cv2.LINE_AA)
 #     cv2.putText(img, "left_wheel_dir: " + str(left_dir) + '(' + str(left) + ')', (10, 80), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2, cv2.LINE_AA)
 #     cv2.putText(img, "right_wheel_speed: " + str(int(classes[2][0][0]) + 10), (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2, cv2.LINE_AA)
@@ -68,7 +68,7 @@ def handle_img():
 
 
 
-model_name = './model_dir_ver4/13.31908044784686_23_Jul-15-2019_23-47-09.h5'
+model_name = '../../data/model/model_dir_ver4/12.7279729479321557_Nov-13-2019_10-08-49.h5'
 os.environ['HDF5_USE_FILE_LOCKING']='FALSE'
 print(model_name)
 model = load_model(model_name)
@@ -84,3 +84,5 @@ try:
             handle_img()
 except KeyboardInterrupt:
     print ('Exception: KeyboardInterrupt')
+
+
