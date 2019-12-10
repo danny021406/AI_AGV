@@ -11,9 +11,9 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 # initialize
-path='../../data/103/'
+path='../../data/train_data/'
 csv_path='../../data/csv/'
-csv_file_name = '../../data/csv/103_store.csv'
+csv_file_name = 'straight_store.csv'
 path_list=os.listdir(path)
 path_list.sort()
 clips = []
@@ -94,7 +94,7 @@ for dirname in path_list:
             clips.append(image)
 
             json_dic.append(one_info)
-            
+
 
 dirname=os.listdir('../../data/train_data/test')
 flag = 1
@@ -115,7 +115,7 @@ for filename in dirname:
     json_dic.append(one_info)
     json_dic.append(one_info)
     json_dic.append(one_info)
-    
+
 
 
 for i in range(500):
@@ -131,15 +131,15 @@ for i in range(500):
 # video_clip_output = 'clip.mp4'
 # video = ImageSequenceClip(list(clips), fps=15).resize(1)
 # video.write_videofile(video_clip_output, fps=15)
-# file = open('store.pickle', 'wb')
-# pickle.dump(json_dic, file)
 # file.close()
 
-left_wheel_dir = []
-left_wheel_speed = []
-right_wheel_dir = []
-right_wheel_speed = []
-filename = []
+# +
+# left_wheel_dir = []
+# left_wheel_speed = []
+# right_wheel_dir = []
+# right_wheel_speed = []
+# filename = []
+# -
 
 for data in json_dic:
     left_wheel_dir.append(data['left_wheel_dir'])
@@ -158,5 +158,5 @@ df['right_wheel_dir'] = right_wheel_dir
 df['right_wheel_speed'] = right_wheel_speed
 df['filename'] = filename
 
-df.to_csv(csv_file_name, sep=',', encoding='utf-8')
+df.to_csv(os.path.join(csv_path, csv_file_name), sep=',', encoding='utf-8')
 

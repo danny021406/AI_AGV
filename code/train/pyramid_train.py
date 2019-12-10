@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # coding: utf-8
-
 #assign the specific GPU
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-csv_file_name = '../../data/csv/pyramid_store_1016.csv'
-model_path = '../../data/model/model_dir_ver4/'
+csv_file_name = '../../data/csv/straight_store.csv'
+model_path = '../../data/model/straight/'
+INPUT_SHAPE = (400, 400, 3) # height width
 
 # 自動增長 GPU 記憶體用量
 import tensorflow as tf
@@ -21,7 +21,6 @@ graph = False
 import pandas as pd
 import cv2
 import numpy as np
-from canny_line import color_frame_process
 
 dir_log = pd.read_csv(csv_file_name,usecols=[1,3])
 speed_log = pd.read_csv(csv_file_name,usecols=[2,4])
@@ -80,35 +79,20 @@ for i in range(len(dir_log)):
 track_log=pd.DataFrame(track_log)
 track_log.rename(columns={0:'left_wheel_speed',1:'right_wheel_speed',2:'left_wheel_dir',3:'right_wheel_dir',4:'filename'},inplace=True)
 
-# def load_in_img(img_location):
-
-#     #folder name has save in img_location
-#     imageLocation = img_location
-#     image = cv2.imread(imageLocation) # Gray
-
-#     if (image is None):
-#         print(imageLocation)
-# #     print(imageLocation)
-
-# #     image = image[45:-9,::]
-#     image = cv2.resize(image, (200, 200), interpolation=cv2.INTER_CUBIC)
-#     image = color_frame_process(image)
-#     image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-#     image = image.reshape(200, 200, 1)
-#     return image
-# #load in the img by csv_data
 def load_in_img(img_location):
     
     #folder name has save in img_location
     imageLocation = img_location
-    image = cv2.imread(imageLocation, 0) # Gray
+    if(INPUT_SHAPE[2] == 1):
+        image = cv2.imread(imageLocation, 0) # Gray
+    elif(INPUT_SHAPE[2] == 3):
+        image = cv2.imread(imageLocation)    # BGR
 
     if (image is None):
         print(imageLocation)
         
-    image = image[45:-9,::]
-    image = cv2.resize(image, (400,400), fx=0, fy=0)
-    image = image.reshape(400, 400, 1)
+    image = cv2.resize(image, (INPUT_SHAPE[0],INPUT_SHAPE[1]), fx=0, fy=0)
+    image = image.reshape(INPUT_SHAPE[0], INPUT_SHAPE[1], INPUT_SHAPE[2])
     return image
 
 numSample = 50
@@ -194,8 +178,6 @@ def generator(samples, batch_size=64, mode='default'):
             else:
                 yield X_train, [left_speeds, left_dirs, right_speeds, right_dirs]
 
-
-
 # split the log into train_samples and validation_samples
 from sklearn.model_selection import train_test_split
 train_samples, validation_samples = train_test_split(track_log, test_size=0.2)
@@ -234,7 +216,6 @@ losses = {
     "left_speed_output": "mse",
     "right_speed_output": "mse",
 }
-INPUT_SHAPE = (400, 400, 1) # height width
 DROP_PROB = 0.7
 os.environ['HDF5_USE_FILE_LOCKING']='FALSE'
 
@@ -289,43 +270,6 @@ for index in range(40):
     train_generator = generator(train_samples, 64)
     validation_generator = generator(validation_samples, 4)
     
-#     history_object = model.fit_generator(
-#                                      train_generator, 
-#                                      samples_per_epoch=32000,
-#                                      validation_data=validation_generator,
-#                                      nb_val_samples=len(validation_samples),
-#                                      nb_epoch=30,
-#                                      verbose=2)
-#     history_object_speed = model_speed.fit_generator(
-#                                       train_generator, 
-#                                       steps_per_epoch=200, 
-#                                       validation_data=validation_generator, 
-#                                       validation_steps=len(validation_samples)/2, 
-#                                       epochs=nb_epoch_count, 
-#                                       verbose=1)
-    
-#     train_generator_dir = generator(train_samples, 64, 'dir')
-#     validation_generator_dir = generator(validation_samples, 4, 'dir')
-#     history_object_dir = model_dir.fit_generator(
-#                                       train_generator_dir, 
-#                                       steps_per_epoch=200, 
-#                                       validation_data=validation_generator_dir, 
-#                                       validation_steps=len(validation_samples)/2, 
-#                                       epochs=nb_epoch_count, 
-#                                       verbose=1)
-    
-#     print('history_object_speed')
-#     print(history_object_speed)
-#     h5_output = save_model(str(history_object_speed.history['loss'][nb_epoch_count-1]) + '_speed_' + str(index)) 
-#     model_speed.save(h5_output)
-#     print("Model saved")
-    
-#     print('history_object_dir')
-#     print(history_object_speed)
-#     h5_output = save_model(str(history_object_dir.history['loss'][nb_epoch_count-1]) + '_dir_' + str(index)) 
-#     model_dir.save(h5_output)
-#     print("Model saved")
-    
     history_object = model.fit_generator(
                                       train_generator, 
                                       steps_per_epoch=200, 
@@ -342,16 +286,6 @@ for index in range(40):
 
 
     print('Time ',index+1)
-    #     plt.close('all')
-#     plt.plot(history_object.history['loss'])
-#     plt.plot(history_object.history['val_loss'])
-#     plt.title('model loss')
-#     plt.ylabel('loss')
-#     plt.xlabel('epoch')
-#     plt.legend(['train', 'test'], loc='upper right')
-#     plt.show()
-#     plt.savefig("./image/gray_" + str(index) + "_image.png")
-#     plt.close('all')
 
 # summarize history for loss
 if graph:

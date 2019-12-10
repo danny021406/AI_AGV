@@ -24,7 +24,7 @@ origin_video_mode = 1
 
 
 # initialize
-path="../../data/test-loss-19/"
+path="../../data/train_data/"
 path_list=os.listdir(path)
 #path_list.sort()
 json_dic = []
@@ -54,17 +54,24 @@ if (origin_video_mode):
     path_list.sort()
     for dirname in path_list:
         file_path = os.path.join(path, dirname)
+        
         if(os.path.isdir(file_path)):
-            print(dirname)
+            print(file_path)
+#             file_path = os.listdir(file_path)
             dirname=os.listdir(path + '/' + dirname)
             dirname.sort()
             for filename in dirname:
+#                 print(filename)
+                if (not filename.endswith('.png')):
+                    continue
                 image1 = cv2.imread(os.path.join(file_path,filename))
     #             clips.append(image)
     #             gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
                 cv2.imwrite('out.jpg', image1)
     #             print(ImageClip(os.path.join(file_path,filename)))
                 clips.append(ImageClip('out.jpg').set_duration(0.05))
+            if(file_path == "../../data/train_data/test - 9"):
+                break
         #without hierarcy 
         else:
             
@@ -131,7 +138,7 @@ def handle_img(img):
 origin_video_mode = 0
 os.environ['HDF5_USE_FILE_LOCKING']='FALSE'
 if (not origin_video_mode):
-    model_name = '../../data/model/model_dir_ver4/12.7279729479321557_Nov-13-2019_10-08-49.h5'
+    model_name = '../../data/model/straight/51.951698461546045_Nov-26-2019_08-22-06.h5'
     os.environ['HDF5_USE_FILE_LOCKING']='FALSE'
     print(model_name)
     model = load_model(model_name)
